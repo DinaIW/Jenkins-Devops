@@ -11,4 +11,4 @@ RUN apt-get update \
 RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
-COPY . /app/
+COPY . .
