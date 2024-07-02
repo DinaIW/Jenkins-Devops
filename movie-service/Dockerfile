@@ -1,8 +1,8 @@
 FROM python:3.8-slim
 
-WORKDIR .
+WORKDIR /app
 
-COPY ./requirements.txt ./requirements.txt
+COPY ./requirements.txt .
 
 RUN apt-get update \
     && apt-get install gcc -y \
@@ -12,3 +12,7 @@ RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
 COPY . .
+
+# Commande par défaut pour démarrer l'application
+CMD [ "python", "app.py" ]
+
