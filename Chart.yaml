@@ -1,0 +1,4 @@
+apiVersion: v2
+name: movie-app
+description: A Helm chart for deploying movie application
+version: 0.1.0

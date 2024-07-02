@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movie-db
+  template:
+    metadata:
+      labels:
+        app: movie-db
+    spec:
+      containers:
+      - name: movie-db
+        image: {{ .Values.movieDb.image }}
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.movieDb.env.POSTGRES_USER | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.movieDb.env.POSTGRES_PASSWORD | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.movieDb.env.POSTGRES_DB | quote }}
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data-movie-pvc

@@ -1,0 +1,27 @@
+namespace: qa
+
+movieService:
+  image: "didiiiw/jen:movie-service-latest"
+  env:
+    DATABASE_URI: "postgresql://movie_db_username:movie_db_password@movie_db/movie_db_dev"
+    CAST_SERVICE_HOST_URL: "http://cast_service:8000/api/v1/casts/"
+movieDb:
+  image: "postgres:12.1-alpine"
+  env:
+    POSTGRES_USER: "movie_db_username"
+    POSTGRES_PASSWORD: "movie_db_password"
+    POSTGRES_DB: "movie_db_dev"
+castService:
+  image: "didiiiw/jen:cast-service-latest"
+  env:
+    DATABASE_URI: "postgresql://cast_db_username:cast_db_password@cast_db/cast_db_dev"
+castDb:
+  image: "postgres:12.1-alpine"
+  env:
+    POSTGRES_USER: "cast_db_username"
+    POSTGRES_PASSWORD: "cast_db_password"
+    POSTGRES_DB: "cast_db_dev"
+nginx:
+  image: "nginx:latest"
+  service:
+    nodePort: 31082

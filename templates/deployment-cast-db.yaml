@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cast-db
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cast-db
+  template:
+    metadata:
+      labels:
+        app: cast-db
+    spec:
+      containers:
+      - name: cast-db
+        image: {{ .Values.castDb.image }}
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.castDb.env.POSTGRES_USER | quote }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.castDb.env.POSTGRES_PASSWORD | quote }}
+        - name: POSTGRES_DB
+          value: {{ .Values.castDb.env.POSTGRES_DB | quote }}
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data-cast-pvc

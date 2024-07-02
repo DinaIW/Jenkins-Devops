@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cast-service
+  namespace: movie-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cast-service
+  template:
+    metadata:
+      labels:
+        app: cast-service
+    spec:
+      containers:
+      - name: cast-service
+        image: didiiiw/jen:cast-service
+        command: ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+        - name: DATABASE_URI
+          value: "postgresql://cast_db_username:cast_db_password@cast-db-service/cast_db_dev"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cast-service
+  namespace: movie-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: cast-service
