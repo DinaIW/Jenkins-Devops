@@ -32,17 +32,7 @@ pipeline {
                 }
             }
         }
-
-        stage('Login to Docker Hub') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v2/', 'dhub') {
-                        docker.login(username: 'didiiiw', password: DOCKER_HUB_PASS)
-                    }
-                }
-            }
-        }
-
+        
         stage('Push Docker Images') {
             parallel {
                 stage('Push cast-service Image') {
