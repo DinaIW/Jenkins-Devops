@@ -3,14 +3,11 @@ pipeline {
 
     environment {
         DOCKER_HUB_PASS = credentials('dhub')
-        KUBECONFIG_FILE = credentials('kubeconfig-credentials')
-        GITHUB_CREDENTIALS = credentials('github-credentials')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Utiliser les identifiants GitHub pour récupérer le code source
                 git credentialsId: 'github-credentials', url: 'https://github.com/DinaIW/examjen.git'
             }
         }
@@ -60,13 +57,16 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    def namespaces = ['dev', 'qa', 'staging']
+                    // Utilisation du kubeconfig pour chaque namespace
+                    def namespaces = ['dev', 'qa', 'staging', 'prod']
                     namespaces.each { namespace ->
-                        sh """
-                            kubectl --kubeconfig=$KUBECONFIG create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
-                            helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
-                        """
+                        withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                            sh """
+                                kubectl --kubeconfig=$KUBECONFIG create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
+                                helm upgrade --install cast-service-${namespace} cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
+                                helm upgrade --install movie-service-${namespace} movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
+                            """
+                        }
                     }
                 }
             }
@@ -81,8 +81,8 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     sh """
                         kubectl --kubeconfig=$KUBECONFIG create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
-                        helm upgrade --install movie-service movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
+                        helm upgrade --install cast-service-prod cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
+                        helm upgrade --install movie-service-prod movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
                     """
                 }
             }
