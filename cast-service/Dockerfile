@@ -2,7 +2,7 @@ FROM python:3.8-slim
 
 WORKDIR .
 
-COPY ./requirements.txt ./requirements.txt
+COPY ./requirements.txt .
 
 RUN apt-get update \
     && apt-get install gcc -y \
