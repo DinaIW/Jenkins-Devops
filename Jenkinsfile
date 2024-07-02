@@ -10,10 +10,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Utiliser les identifiants GitHub pour récupérer le code source
                 git credentialsId: 'github-credentials', url: 'https://github.com/DinaIW/examjen.git'
             }
         }
-    
+
         stage('Build Docker Images') {
             parallel {
                 stage('Build cast-service Image') {
@@ -32,13 +33,13 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push Docker Images') {
             parallel {
                 stage('Push cast-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v2/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
                                 docker.image("didiiiw/jen:cast-service-latest").push()
                             }
                         }
@@ -47,7 +48,7 @@ pipeline {
                 stage('Push movie-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v2/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
                                 docker.image("didiiiw/jen:movie-service-latest").push()
                             }
                         }
