@@ -62,9 +62,9 @@ pipeline {
                 script {
                     withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                         sh '''
-                            mkdir -p /tmp/kubeconfig
-                            cp "$KUBECONFIG" /tmp/kubeconfig/config
-                            export KUBECONFIG=/tmp/kubeconfig/config
+                            mkdir -p $WORKSPACE/kubeconfig
+                            cp "$KUBECONFIG" $WORKSPACE/kubeconfig/config
+                            export KUBECONFIG=$WORKSPACE/kubeconfig/config
                         '''
                     }
 
@@ -88,9 +88,9 @@ pipeline {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     sh '''
-                        mkdir -p /tmp/kubeconfig
-                        cp "$KUBECONFIG" /tmp/kubeconfig/config
-                        export KUBECONFIG=/tmp/kubeconfig/config
+                        mkdir -p $WORKSPACE/kubeconfig
+                        cp "$KUBECONFIG" $WORKSPACE/kubeconfig/config
+                        export KUBECONFIG=$WORKSPACE/kubeconfig/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
                         helm upgrade --install movie-service movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
