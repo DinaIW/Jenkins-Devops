@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # Copie du requirements.txt spécifique à movie-service dans le répertoire de travail
-COPY ./movie-service/requirements.txt .
+COPY ./requirements.txt .
 
 # Installation des dépendances Python spécifiées dans requirements.txt
 RUN apt-get update \
