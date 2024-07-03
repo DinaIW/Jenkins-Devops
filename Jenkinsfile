@@ -60,10 +60,13 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
+                    // Copier le contenu de la variable KUBECONFIG_FILE dans le fichier ~/.kube/config
+                    cat "$KUBECONFIG_FILE" > "~/.kube/config"
+
                     def namespaces = ['dev', 'qa', 'staging']
                     namespaces.each { namespace ->
                         sh """
-                            kubectl --kubeconfig=$KUBECONFIG create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
+                            kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
                             helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
                             helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
                         """
@@ -80,7 +83,7 @@ pipeline {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     sh """
-                        kubectl --kubeconfig=$KUBECONFIG create namespace prod --dry-run=client -o yaml | kubectl apply -f -
+                        kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
                         helm upgrade --install movie-service movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
                     """
