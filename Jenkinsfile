@@ -58,7 +58,9 @@ pipeline {
 
         stage('Package Helm Chart') {
             steps {
-                sh 'helm package . -d ./helm-charts'
+                script {
+                    sh 'helm package . -d ./helm-charts'
+                }
             }
         }
 
