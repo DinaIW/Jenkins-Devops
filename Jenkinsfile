@@ -5,7 +5,7 @@ pipeline {
         DOCKER_HUB_PASS = credentials('dhub')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
-        CHART_PATH = './Chart.yaml'  // Chemin vers Chart.yaml à la racine
+        
     }
 
     stages {
@@ -66,8 +66,8 @@ pipeline {
                     namespaces.each { namespace ->
                         sh """
                             kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service ${CHART_PATH} --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/${namespace}-values.yaml
-                            helm upgrade --install movie-service ${CHART_PATH} --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/${namespace}-values.yaml
+                            helm upgrade --install cast-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/${namespace}-values.yaml
+                            helm upgrade --install movie-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/${namespace}-values.yaml
                         """
                     }
                 }
@@ -84,8 +84,8 @@ pipeline {
                     sh """
                         mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service ${CHART_PATH} --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/prod-values.yaml
-                        helm upgrade --install movie-service ${CHART_PATH} --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/prod-values.yaml
+                        helm upgrade --install cast-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/prod-values.yaml
+                        helm upgrade --install movie-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/prod-values.yaml
                     """
                 }
             }
