@@ -10,7 +10,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Utiliser les identifiants GitHub pour récupérer le code source
                 git credentialsId: 'github-credentials', url: 'https://github.com/DinaIW/examjen.git'
             }
         }
@@ -61,39 +60,15 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     script {
-                        sh '''
-                            mkdir -p ~/.kube
-                            cat "$KUBECONFIG" > ~/.kube/config
-                        '''
-                        def namespaces = ['dev', 'qa', 'staging']
+                        def namespaces = ['dev', 'qa', 'staging', 'prod']
                         namespaces.each { namespace ->
                             sh """
-                                kubectl --kubeconfig=~/.kube/config create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
+                                kubectl --kubeconfig=$KUBECONFIG create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
                                 helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
                                 helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
                             """
                         }
                     }
-                }
-            }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'master'
-            }
-            steps {
-                input message: 'Deploy to Production?', ok: 'Deploy'
-                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        mkdir -p ~/.kube
-                        cat "$KUBECONFIG" > ~/.kube/config
-                    '''
-                    sh """
-                        kubectl --kubeconfig=~/.kube/config create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
-                        helm upgrade --install movie-service movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
-                    """
                 }
             }
         }
