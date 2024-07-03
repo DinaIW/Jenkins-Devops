@@ -59,17 +59,16 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    // Écrire le contenu de la variable KUBECONFIG dans un fichier à l'emplacement spécifié
-                    writeFile file: "~/.kube/config", text: "${KUBECONFIG_FILE}"
-
-                    def namespaces = ['dev', 'qa', 'staging']
-                    namespaces.each { namespace ->
-                        sh """
-                            kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
-                            helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
-                        """
+                withKubeConfig([credentialsId: 'kubeconfig-credentials', kubeconfigFile: '']) {
+                    script {
+                        def namespaces = ['dev', 'qa', 'staging']
+                        namespaces.each { namespace ->
+                            sh """
+                                kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
+                                helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
+                                helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
+                            """
+                        }
                     }
                 }
             }
@@ -81,7 +80,7 @@ pipeline {
             }
             steps {
                 input message: 'Deploy to Production?', ok: 'Deploy'
-                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                withKubeConfig([credentialsId: 'kubeconfig-credentials', kubeconfigFile: '']) {
                     sh """
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
