@@ -5,12 +5,13 @@ pipeline {
         DOCKER_HUB_PASS = credentials('dhub')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
-        CHART_PATH = './Chart.yaml'  // Définition du chemin vers Chart.yaml à la racine
+        CHART_PATH = './Chart.yaml'  // Chemin vers Chart.yaml à la racine
     }
 
     stages {
         stage('Checkout') {
             steps {
+                // Utiliser les identifiants GitHub pour récupérer le code source
                 git credentialsId: 'github-credentials', url: 'https://github.com/DinaIW/examjen.git'
             }
         }
