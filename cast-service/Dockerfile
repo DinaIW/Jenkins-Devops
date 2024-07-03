@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # Copie du requirements.txt spécifique à cast-service dans le répertoire de travail
-COPY ./cast-service/requirements.txt .
+COPY ./requirements.txt .
 
 # Installation des dépendances Python spécifiées dans requirements.txt
 RUN apt-get update \
@@ -16,7 +16,7 @@ RUN pip install -r requirements.txt \
     && rm -rf /root/.cache/pip
 
 # Copie du reste des fichiers de l'application
-COPY ./cast-service .
+COPY . .
 
 # Commande par défaut pour démarrer l'application
 CMD [ "python", "app.py" ]
