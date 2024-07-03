@@ -65,8 +65,8 @@ pipeline {
                     namespaces.each { namespace ->
                         sh """
                             kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f .${namespace}-values.yaml
-                            helm upgrade --install movie-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./${namespace}-values.yaml
+                            helm upgrade --install cast-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
+                            helm upgrade --install movie-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
                         """
                     }
                 }
@@ -83,8 +83,8 @@ pipeline {
                     sh """
                         mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./prod-values.yaml
-                        helm upgrade --install movie-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./prod-values.yaml
+                        helm upgrade --install cast-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
+                        helm upgrade --install movie-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
                     """
                 }
             }
