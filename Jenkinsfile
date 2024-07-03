@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_PASS = credentials('dhub')
+        DOCKER_HUB_PASS = credentials('DOCKER_HUB_PASS')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
     }
@@ -39,7 +39,7 @@ pipeline {
                 stage('Push cast-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
                                 docker.image("didiiiw/jen:cast-service-latest").push()
                             }
                         }
@@ -48,7 +48,7 @@ pipeline {
                 stage('Push movie-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
                                 docker.image("didiiiw/jen:movie-service-latest").push()
                             }
                         }
@@ -60,8 +60,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Copier le contenu de la variable KUBECONFIG_FILE dans le fichier ~/.kube/config
-                    cat "$KUBECONFIG_FILE" > "~/.kube/config"
+                    // Écrire le contenu de la variable KUBECONFIG dans un fichier à l'emplacement spécifié
+                    writeFile file: "~/.kube/config", text: "${KUBECONFIG_FILE}"
 
                     def namespaces = ['dev', 'qa', 'staging']
                     namespaces.each { namespace ->
