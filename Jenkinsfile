@@ -63,12 +63,11 @@ pipeline {
                     withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                         sh '''
                             mkdir -p /tmp/kubeconfig
-                            rm -f /tmp/kubeconfig/config
-                            cp $KUBECONFIG /tmp/kubeconfig/config
+                            cp "$KUBECONFIG" /tmp/kubeconfig/config
                             export KUBECONFIG=/tmp/kubeconfig/config
                         '''
                     }
-                    
+
                     def namespaces = ['dev', 'qa', 'staging']
                     namespaces.each { namespace ->
                         sh """
@@ -90,8 +89,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     sh '''
                         mkdir -p /tmp/kubeconfig
-                        rm -f /tmp/kubeconfig/config
-                        cp $KUBECONFIG /tmp/kubeconfig/config
+                        cp "$KUBECONFIG" /tmp/kubeconfig/config
                         export KUBECONFIG=/tmp/kubeconfig/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
