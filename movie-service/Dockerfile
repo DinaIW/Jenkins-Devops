@@ -16,7 +16,7 @@ RUN pip install -r requirements.txt \
     && rm -rf /root/.cache/pip
 
 # Copie du reste des fichiers de l'application
-COPY ./movie-service .
+COPY . .
 
 # Commande par défaut pour démarrer l'application
 CMD [ "python", "app.py" ]
