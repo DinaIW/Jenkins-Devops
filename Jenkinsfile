@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_PASS = credentials('DOCKER_HUB_PASS')
+        DOCKER_HUB_PASS = credentials('dhub')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
     }
@@ -39,7 +39,7 @@ pipeline {
                 stage('Push cast-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
                                 docker.image("didiiiw/jen:cast-service-latest").push()
                             }
                         }
@@ -48,7 +48,7 @@ pipeline {
                 stage('Push movie-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
                                 docker.image("didiiiw/jen:movie-service-latest").push()
                             }
                         }
