@@ -1,5 +1,5 @@
 pipeline {
-agent any
+    agent any
 
     environment {
         DOCKER_HUB_PASS = credentials('dhub')
