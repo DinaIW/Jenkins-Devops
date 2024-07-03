@@ -5,13 +5,11 @@ pipeline {
         DOCKER_HUB_PASS = credentials('dhub')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
-        
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Utiliser les identifiants GitHub pour récupérer le code source
                 git credentialsId: 'github-credentials', url: 'https://github.com/DinaIW/examjen.git'
             }
         }
@@ -58,16 +56,22 @@ pipeline {
             }
         }
 
+        stage('Package Helm Chart') {
+            steps {
+                sh 'helm package . -d ./helm-charts'
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 script {
                     sh 'mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config'
-                    def namespaces = ['dev', 'qa', 'staging']
-                    namespaces.each { namespace ->
+                    def environments = ['dev', 'qa', 'staging']
+                    environments.each { env ->
                         sh """
-                            kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./${namespace}-values.yaml
-                            helm upgrade --install movie-service ./Chart.yaml --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./${namespace}-values.yaml
+                            kubectl create namespace ${env} --dry-run=client -o yaml | kubectl apply -f -
+                            helm upgrade --install cast-service ./helm-charts/movie-app-0.1.0.tgz --namespace ${env} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./${env}-values.yaml
+                            helm upgrade --install movie-service ./helm-charts/movie-app-0.1.0.tgz --namespace ${env} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./${env}-values.yaml
                         """
                     }
                 }
@@ -84,8 +88,8 @@ pipeline {
                     sh """
                         mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/prod-values.yaml
-                        helm upgrade --install movie-service ./Chart.yaml --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/prod-values.yaml
+                        helm upgrade --install cast-service ./helm-charts/movie-app-0.1.0.tgz --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ./exam/prod-values.yaml
+                        helm upgrade --install movie-service ./helm-charts/movie-app-0.1.0.tgz --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ./exam/prod-values.yaml
                     """
                 }
             }
