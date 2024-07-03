@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_PASS = credentials('dhub')
+        DOCKER_HUB_PASS = credentials('DOCKER_HUB_PASS')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
     }
@@ -39,7 +39,7 @@ pipeline {
                 stage('Push cast-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
                                 docker.image("didiiiw/jen:cast-service-latest").push()
                             }
                         }
@@ -48,7 +48,7 @@ pipeline {
                 stage('Push movie-service Image') {
                     steps {
                         script {
-                            docker.withRegistry('https://index.docker.io/v1/', 'dhub') {
+                            docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_PASS') {
                                 docker.image("didiiiw/jen:movie-service-latest").push()
                             }
                         }
@@ -59,22 +59,20 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
+                    script {
                         sh '''
-                            mkdir -p "$WORKSPACE/kubeconfig"
-                            cp "$KUBECONFIG" "$WORKSPACE/kubeconfig/config"
-                            export KUBECONFIG="$WORKSPACE/kubeconfig/config"
+                            mkdir -p ~/.kube
+                            cat "$KUBECONFIG" > ~/.kube/config
                         '''
-                    }
-
-                    def namespaces = ['dev', 'qa', 'staging']
-                    namespaces.each { namespace ->
-                        sh """
-                            kubectl create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
-                            helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
-                        """
+                        def namespaces = ['dev', 'qa', 'staging']
+                        namespaces.each { namespace ->
+                            sh """
+                                kubectl --kubeconfig=~/.kube/config create namespace ${namespace} --dry-run=client -o yaml | kubectl apply -f -
+                                helm upgrade --install cast-service cast-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f ${namespace}-values.yaml
+                                helm upgrade --install movie-service movie-service-chart --namespace ${namespace} --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f ${namespace}-values.yaml
+                            """
+                        }
                     }
                 }
             }
@@ -88,13 +86,14 @@ pipeline {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 withCredentials([file(credentialsId: 'kubeconfig-credentials', variable: 'KUBECONFIG')]) {
                     sh '''
-                        mkdir -p "$WORKSPACE/kubeconfig"
-                        cp "$KUBECONFIG" "$WORKSPACE/kubeconfig/config"
-                        export KUBECONFIG="$WORKSPACE/kubeconfig/config"
-                        kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
+                        mkdir -p ~/.kube
+                        cat "$KUBECONFIG" > ~/.kube/config
+                    '''
+                    sh """
+                        kubectl --kubeconfig=~/.kube/config create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service cast-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=cast-service-latest -f prod-values.yaml
                         helm upgrade --install movie-service movie-service-chart --namespace prod --set image.repository=didiiiw/jen,image.tag=movie-service-latest -f prod-values.yaml
-                    '''
+                    """
                 }
             }
         }
