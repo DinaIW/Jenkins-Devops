@@ -91,16 +91,12 @@ pipeline {
             }
             steps {
                 script {
-                    def environments = [
-                        [name: 'prod', valuesFile: 'prod-values.yaml']
-                    ]
                     sh '''
                         rm -Rf .kube
                         mkdir .kube
                         cat $KUBECONFIG > .kube/config
                     '''
-                    environments.each { env ->
-                        sh "helm upgrade ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
+                        sh "helm install prod . -f prod-values --namespace prod"
                     }
                 }
             }
