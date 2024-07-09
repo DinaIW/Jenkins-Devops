@@ -24,4 +24,4 @@ castDb:
 nginx:
   image: "nginx:latest"
   service:
-    nodePort: 31083
+    nodePort: 34083

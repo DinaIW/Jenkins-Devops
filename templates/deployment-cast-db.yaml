@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cast-db
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.Namespace }}
 spec:
   replicas: 1
   selector:
