@@ -59,7 +59,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    sh 'mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config'
+                    sh 'mkdir -p ~/.kube > ~/.kube/config'
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
@@ -90,7 +90,7 @@ pipeline {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 script {
                     sh """
-                        mkdir -p ~/.kube && cat "$KUBECONFIG_FILE" > ~/.kube/config
+                        mkdir -p ~/.kube > ~/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
                             --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
