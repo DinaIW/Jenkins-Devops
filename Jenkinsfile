@@ -65,8 +65,7 @@ pipeline {
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
-                        [name: 'staging', valuesFile: 'staging-values.yaml'],
-                        [name: 'prod', valuesFile: 'prod-values.yaml']
+                        [name: 'staging', valuesFile: 'staging-values.yaml']
                     ]
 
                     // Prepare Kubeconfig
@@ -75,10 +74,9 @@ pipeline {
                         mkdir .kube
                         cat $KUBECONFIG > .kube/config
                     '''
-
-                    // Deploy using Helm for each environment
+                    
                     environments.each { env ->
-                        sh "helm install ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
+                        sh "helm upgrade ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
                     }
                 }
             }
@@ -88,26 +86,25 @@ pipeline {
             when {
                 branch 'master'
             }
+            environment {
+                KUBECONFIG = credentials("kubeconfig-credentials")
+            }
             steps {
-                input message: 'Deploy to Production?', ok: 'Deploy'
                 script {
-                    // Ensure kubeconfig file is accessible
-                    sh '''
-                        mkdir -p /var/lib/jenkins/.kube
-                        cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
-                        chown jenkins:jenkins /var/lib/jenkins/.kube/config
-                        chmod 700 /var/lib/jenkins/.kube/config
-                    '''
-                    // Export updated kubeconfig path
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
+                    def environments = [
+                        [name: 'prod', valuesFile: 'prod-values.yaml']
+                    ]
 
-                    // Execute kubectl and helm commands
-                    sh """
-                        kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
-                            --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
-                            -f prod-values.yaml
-                    """
+
+                    sh '''
+                        rm -Rf .kube
+                        mkdir .kube
+                        cat $KUBECONFIG > .kube/config
+                    '''
+
+                    environments.each { env ->
+                        sh "helm upgrade ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
+                    }
                 }
             }
         }
