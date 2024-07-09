@@ -59,14 +59,17 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Créer le répertoire .kube pour Jenkins
-                    sh 'mkdir -p /var/lib/jenkins/.kube'
-                    
-                    // Copier le contenu du credential KUBECONFIG_FILE dans le fichier kubeconfig
-                    writeFile file: '/var/lib/jenkins/.kube/config', text: KUBECONFIG_FILE
-                    sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
-                    sh 'chmod 600 /var/lib/jenkins/.kube/config'
-                    
+                    // Assurez-vous que le fichier kubeconfig est accessible
+                    sh '''
+                        mkdir -p /var/lib/jenkins/.kube
+                        cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
+                        chown jenkins:jenkins /var/lib/jenkins/.kube/config
+                        chmod 600 /var/lib/jenkins/.kube/config
+                    '''
+                    // Exporter le chemin du kubeconfig mis à jour
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
+
+                    // Exécutez vos commandes helm ici
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
@@ -75,10 +78,7 @@ pipeline {
                     ]
 
                     environments.each { env ->
-                        sh """
-                            export KUBECONFIG=/var/lib/jenkins/.kube/config
-                            helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name}
-                        """
+                        sh "helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name}"
                     }
                 }
             }
@@ -91,16 +91,18 @@ pipeline {
             steps {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 script {
-                    // Créer le répertoire .kube pour Jenkins
-                    sh 'mkdir -p /var/lib/jenkins/.kube'
-                    
-                    // Copier le contenu du credential KUBECONFIG_FILE dans le fichier kubeconfig
-                    writeFile file: '/var/lib/jenkins/.kube/config', text: KUBECONFIG_FILE
-                    sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
-                    sh 'chmod 600 /var/lib/jenkins/.kube/config'
-                    
+                    // Assurez-vous que le fichier kubeconfig est accessible
+                    sh '''
+                        mkdir -p /var/lib/jenkins/.kube
+                        cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
+                        chown jenkins:jenkins /var/lib/jenkins/.kube/config
+                        chmod 600 /var/lib/jenkins/.kube/config
+                    '''
+                    // Exporter le chemin du kubeconfig mis à jour
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
+
+                    // Exécutez vos commandes kubectl et helm ici
                     sh """
-                        export KUBECONFIG=/var/lib/jenkins/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
                             --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
