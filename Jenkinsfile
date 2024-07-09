@@ -59,10 +59,14 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
+                    // Créer le répertoire .kube pour Jenkins
                     sh 'mkdir -p /var/lib/jenkins/.kube'
-                    sh 'cp /path/to/source/kubeconfig /var/lib/jenkins/.kube/config'
+                    
+                    // Copier le contenu du credential KUBECONFIG_FILE dans le fichier kubeconfig
+                    writeFile file: '/var/lib/jenkins/.kube/config', text: KUBECONFIG_FILE
                     sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
                     sh 'chmod 600 /var/lib/jenkins/.kube/config'
+                    
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
@@ -87,10 +91,14 @@ pipeline {
             steps {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 script {
+                    // Créer le répertoire .kube pour Jenkins
                     sh 'mkdir -p /var/lib/jenkins/.kube'
-                    sh 'cp /path/to/source/kubeconfig /var/lib/jenkins/.kube/config'
+                    
+                    // Copier le contenu du credential KUBECONFIG_FILE dans le fichier kubeconfig
+                    writeFile file: '/var/lib/jenkins/.kube/config', text: KUBECONFIG_FILE
                     sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
                     sh 'chmod 600 /var/lib/jenkins/.kube/config'
+                    
                     sh """
                         export KUBECONFIG=/var/lib/jenkins/.kube/config
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
