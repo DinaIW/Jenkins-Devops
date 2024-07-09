@@ -69,13 +69,8 @@ pipeline {
 
                     environments.each { env ->
                         sh """
-                            kubectl create namespace ${env.name} --dry-run=client -o yaml | kubectl apply -f -
-                            helm upgrade --install cast-service-${env.name} ./Chart.yaml --namespace ${env.name} \
-                                --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
-                                -f ${env.valuesFile}
-                            helm upgrade --install movie-service-${env.name} ./Chart.yaml --namespace ${env.name} \
-                                --set image.repository=didiiiw/jen,image.tag=movie-service-latest \
-                                -f ${env.valuesFile}
+                            kubectl create namespace ${env.name}
+                            helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name} \
                         """
                     }
                 }
