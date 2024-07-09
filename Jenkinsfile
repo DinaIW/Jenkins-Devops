@@ -57,14 +57,11 @@ pipeline {
         }
 
         stage('Deploy to Kubernetes') {
+            environment {
+                KUBECONFIG = credentials("kubeconfig-credentials")
+            }
             steps {
                 script {
-                    // Assurez-vous que le fichier kubeconfig est accessible
-                    sh '''
-                      rm -Rf .kube
-                      mkdir .kube
-                    '''
-                    // Exécutez vos commandes helm ici
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
@@ -72,8 +69,16 @@ pipeline {
                         [name: 'prod', valuesFile: 'prod-values.yaml']
                     ]
 
+                    // Prepare Kubeconfig
+                    sh '''
+                        rm -Rf .kube
+                        mkdir .kube
+                        cat $KUBECONFIG > .kube/config
+                    '''
+
+                    // Deploy using Helm for each environment
                     environments.each { env ->
-                        sh "helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name}"
+                        sh "helm install ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
                     }
                 }
             }
@@ -86,17 +91,17 @@ pipeline {
             steps {
                 input message: 'Deploy to Production?', ok: 'Deploy'
                 script {
-                    // Assurez-vous que le fichier kubeconfig est accessible
+                    // Ensure kubeconfig file is accessible
                     sh '''
                         mkdir -p /var/lib/jenkins/.kube
                         cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
                         chown jenkins:jenkins /var/lib/jenkins/.kube/config
                         chmod 700 /var/lib/jenkins/.kube/config
                     '''
-                    // Exporter le chemin du kubeconfig mis à jour
+                    // Export updated kubeconfig path
                     sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
 
-                    // Exécutez vos commandes kubectl et helm ici
+                    // Execute kubectl and helm commands
                     sh """
                         kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
                         helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
