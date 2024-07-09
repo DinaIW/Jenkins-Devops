@@ -69,7 +69,6 @@ pipeline {
 
                     environments.each { env ->
                         sh """
-                            kubectl create namespace ${env.name}
                             helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name} \
                         """
                     }
