@@ -63,14 +63,7 @@ pipeline {
                     sh '''
                       rm -Rf .kube
                       mkdir .kube
-                      ls
-                      cat $KUBECONFIG > .kube/config
-                      cp fastapi/values.yaml values.yml
-                      cat values.yml
                     '''
-                    // Exporter le chemin du kubeconfig mis à jour
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
-
                     // Exécutez vos commandes helm ici
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
