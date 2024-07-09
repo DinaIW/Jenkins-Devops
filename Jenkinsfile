@@ -56,58 +56,48 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh 'mkdir -p ~/.kube > ~/.kube/config'
-                    def environments = [
-                        [name: 'dev', valuesFile: 'dev-values.yaml'],
-                        [name: 'qa', valuesFile: 'qa-values.yaml'],
-                        [name: 'staging', valuesFile: 'staging-values.yaml'],
-                        [name: 'prod', valuesFile: 'prod-values.yaml']
-                    ]
+stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            sh 'mkdir -p /var/lib/jenkins/.kube'
+            sh 'cp /path/to/source/kubeconfig /var/lib/jenkins/.kube/config'
+            sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
+            sh 'chmod 600 /var/lib/jenkins/.kube/config'
+            def environments = [
+                [name: 'dev', valuesFile: 'dev-values.yaml'],
+                [name: 'qa', valuesFile: 'qa-values.yaml'],
+                [name: 'staging', valuesFile: 'staging-values.yaml'],
+                [name: 'prod', valuesFile: 'prod-values.yaml']
+            ]
 
-                    environments.each { env ->
-                        sh """
-                            helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name} \
-                        """
-                    }
-                }
+            environments.each { env ->
+                sh """
+                    export KUBECONFIG=/var/lib/jenkins/.kube/config
+                    helm install ${env.name} . -f ${env.name}-values.yaml --namespace ${env.name}
+                """
             }
-        }
-
-        stage('Deploy to Production') {
-            when {
-                branch 'master'
-            }
-            steps {
-                input message: 'Deploy to Production?', ok: 'Deploy'
-                script {
-                    sh """
-                        mkdir -p ~/.kube > ~/.kube/config
-                        kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
-                        helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
-                            --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
-                            -f prod-values.yaml
-                        helm upgrade --install movie-service-prod ./Chart.yaml --namespace prod \
-                            --set image.repository=didiiiw/jen,image.tag=movie-service-latest \
-                            -f prod-values.yaml
-                    """
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            sh 'docker logout'
-        }
-        success {
-            echo 'Deployment succeeded!'
-        }
-        failure {
-            echo 'Deployment failed!'
         }
     }
 }
 
+stage('Deploy to Production') {
+    when {
+        branch 'master'
+    }
+    steps {
+        input message: 'Deploy to Production?', ok: 'Deploy'
+        script {
+            sh 'mkdir -p /var/lib/jenkins/.kube'
+            sh 'cp /path/to/source/kubeconfig /var/lib/jenkins/.kube/config'
+            sh 'chown jenkins:jenkins /var/lib/jenkins/.kube/config'
+            sh 'chmod 600 /var/lib/jenkins/.kube/config'
+            sh """
+                export KUBECONFIG=/var/lib/jenkins/.kube/config
+                kubectl create namespace prod --dry-run=client -o yaml | kubectl apply -f -
+                helm upgrade --install cast-service-prod ./Chart.yaml --namespace prod \
+                    --set image.repository=didiiiw/jen,image.tag=cast-service-latest \
+                    -f prod-values.yaml
+            """
+        }
+    }
+}
