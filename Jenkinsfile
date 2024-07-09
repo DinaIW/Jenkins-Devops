@@ -64,7 +64,7 @@ pipeline {
                         mkdir -p /var/lib/jenkins/.kube
                         cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
                         chown jenkins:jenkins /var/lib/jenkins/.kube/config
-                        chmod 600 /var/lib/jenkins/.kube/config
+                        chmod 700 /var/lib/jenkins/.kube/config
                     '''
                     // Exporter le chemin du kubeconfig mis à jour
                     sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
@@ -96,7 +96,7 @@ pipeline {
                         mkdir -p /var/lib/jenkins/.kube
                         cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
                         chown jenkins:jenkins /var/lib/jenkins/.kube/config
-                        chmod 600 /var/lib/jenkins/.kube/config
+                        chmod 700 /var/lib/jenkins/.kube/config
                     '''
                     // Exporter le chemin du kubeconfig mis à jour
                     sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
