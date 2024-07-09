@@ -61,10 +61,12 @@ pipeline {
                 script {
                     // Assurez-vous que le fichier kubeconfig est accessible
                     sh '''
-                        mkdir -p /var/lib/jenkins/.kube
-                        cp /var/lib/jenkins/config /var/lib/jenkins/.kube/config
-                        chown jenkins:jenkins /var/lib/jenkins/.kube/config
-                        chmod 700 /var/lib/jenkins/.kube/config
+                      rm -Rf .kube
+                      mkdir .kube
+                      ls
+                      cat $KUBECONFIG > .kube/config
+                      cp fastapi/values.yaml values.yml
+                      cat values.yml
                     '''
                     // Exporter le chemin du kubeconfig mis à jour
                     sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config'
