@@ -82,6 +82,9 @@ pipeline {
         }
 
         stage('Deploy to Production') {
+            environment {
+                KUBECONFIG = credentials("kubeconfig-credentials")
+            }
             steps {
                 script {
                     timeout(time: 1, unit: 'HOURS') {
