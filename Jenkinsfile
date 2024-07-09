@@ -99,7 +99,7 @@ pipeline {
                                 rm -Rf .kube
                                 mkdir .kube
                                 cat $KUBECONFIG > .kube/config
-                                helm install prod . -f prod-values --namespace prod
+                                helm install prod . -f prod-values.yaml --namespace prod
                             '''
                         }
                     }
