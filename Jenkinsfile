@@ -65,18 +65,15 @@ pipeline {
                     def environments = [
                         [name: 'dev', valuesFile: 'dev-values.yaml'],
                         [name: 'qa', valuesFile: 'qa-values.yaml'],
-                        [name: 'staging', valuesFile: 'staging-values.yaml'],
-                        [name: 'prod', valuesFile: 'prod-values.yaml']
+                        [name: 'staging', valuesFile: 'staging-values.yaml']
                     ]
 
-                    // Prepare Kubeconfig
                     sh '''
                         rm -Rf .kube
                         mkdir .kube
                         cp ${KUBECONFIG_FILE} .kube/config
                     '''
 
-                    // Deploy using Helm for each environment
                     environments.each { env ->
                         sh "helm upgrade --install ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
                     }
@@ -85,38 +82,26 @@ pipeline {
         }
 
         stage('Deploy to Production') {
-            when {
-                branch 'master'
-            }
-            environment {
-                KUBECONFIG = credentials("kubeconfig-credentials")
-            }
             steps {
                 script {
-                    def promptInput = input(
-                        id: 'deploy-to-prod',
-                        message: 'Proceed with deploying to production?',
-                        parameters: [booleanParam(defaultValue: false, description: 'Deploy to production')]
-                    )
-
-                    if (promptInput) {
-                        def environments = [
-                            [name: 'prod', valuesFile: 'prod-values.yaml']
-                        ]
-
-                        // Prepare Kubeconfig
-                        sh '''
-                            rm -Rf .kube
-                            mkdir .kube
-                            cp ${KUBECONFIG_FILE} .kube/config
-                        '''
-
-                        // Deploy using Helm for each environment
-                        environments.each { env ->
-                            sh "helm upgrade --install ${env.name} . -f ${env.valuesFile} --namespace ${env.name}"
+                    timeout(time: 1, unit: 'HOURS') {
+                        def userInput = input(
+                            message: 'Are you sure you want to deploy to production?',
+                            ok: 'Deploy',
+                            parameters: [
+                                [$class: 'BooleanParameterDefinition', name: 'confirm', defaultValue: false]
+                            ]
+                        )
+                        if (!userInput) {
+                            error('Production deployment cancelled.')
+                        } else {
+                            sh '''
+                                rm -Rf .kube
+                                mkdir .kube
+                                cat $KUBECONFIG > .kube/config
+                                helm install prod . -f prod-values --namespace prod
+                            '''
                         }
-                    } else {
-                        error 'Deployment to production cancelled by user'
                     }
                 }
             }
