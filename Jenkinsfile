@@ -1,6 +1,6 @@
 pipeline {
     agent any
- 
+
     environment {
         DOCKER_HUB_PASS = credentials('dockerhub-credentials')
         KUBECONFIG_FILE = credentials('kubeconfig-credentials')
