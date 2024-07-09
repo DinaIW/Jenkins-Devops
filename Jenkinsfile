@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         DOCKER_HUB_PASS = credentials('dockerhub-credentials')
-
+        KUBECONFIG_FILE = credentials('kubeconfig-credentials')
+        GITHUB_CREDENTIALS = credentials('github-credentials')
     }
 
     stages {
@@ -71,7 +72,7 @@ pipeline {
                     sh '''
                         rm -Rf .kube
                         mkdir .kube
-                        cat $KUBECONFIG > .kube/config
+                        cp $KUBECONFIG .kube/config
                     '''
                     
                     environments.each { env ->
@@ -93,12 +94,12 @@ pipeline {
                     sh '''
                         rm -Rf .kube
                         mkdir .kube
-                        cat $KUBECONFIG > .kube/config
+                        cp $KUBECONFIG .kube/config
                     '''
-                        sh "helm install prod . -f prod-values --namespace prod"
-                    }
+                    sh "helm install prod . -f prod-values.yaml --namespace prod"
                 }
             }
         }
     }
 }
+
